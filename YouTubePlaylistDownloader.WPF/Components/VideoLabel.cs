@@ -8,11 +8,12 @@ namespace YouTubePlaylistDownloader.WPF.Components
         public VideoLabel(string title)
         {
             Text = title;
-            Height = 20;
+            MaxHeight = 60;
             Width = 350;
-            Margin = new Thickness(140, 0, 0, 0);
+            TextWrapping = TextWrapping.Wrap;
+            Margin = new Thickness(10, 0, 0, 0);
             HorizontalAlignment = HorizontalAlignment.Left;
-            VerticalAlignment = VerticalAlignment.Top;
+            VerticalAlignment = VerticalAlignment.Center;
         }
     }
 }

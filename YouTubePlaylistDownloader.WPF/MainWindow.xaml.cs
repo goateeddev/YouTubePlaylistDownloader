@@ -32,12 +32,14 @@ namespace YouTubePlaylistDownloader.WPF
 
         private void Initialisations()
         {
-            Border border = new Border();
-            border.BorderThickness = new Thickness(1);
-            border.Height = 350;
-            border.Width = 620;
-            border.BorderBrush = Brushes.Black;
-            border.Margin = new Thickness(-144,-31,0,0);
+            Border border = new Border
+            {
+                BorderThickness = new Thickness(1),
+                Height = 350,
+                Width = 620,
+                BorderBrush = Brushes.Black,
+                Margin = new Thickness(-144, -31, 0, 0)
+            };
             window.Children.Add(border);
 
             scrollview.Content = pnl_videos;
@@ -51,8 +53,13 @@ namespace YouTubePlaylistDownloader.WPF
         {
             try
             {
-                //lbl_username.Text
+                //TODO: work out why any string passed authenticates my user account
                 string username = await Logic.GetAccountUsername("email_here");
+                tb_email.Visibility = Visibility.Collapsed;
+                btn_verify.Visibility = Visibility.Collapsed;
+                tb_username.Text = username;
+                vb_username.Visibility = Visibility.Visible;
+
                 playlists = await Logic.GetUserPlaylists(playlists);
 
                 foreach (var item in playlists)
@@ -60,11 +67,10 @@ namespace YouTubePlaylistDownloader.WPF
                     cb_playlists.Items.Add(item.Name);
                 }
                 ButtonsEnabled(true);
-                //Controls.Remove(pnl_verify);
             }
             catch (System.Net.Http.HttpRequestException)
             {
-                System.Windows.MessageBox.Show("Please check your internet connect and try again.", "No internet connection detected", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show("Please check your internet connection and try again.", "No internet connection detected", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -72,14 +78,9 @@ namespace YouTubePlaylistDownloader.WPF
         {
             ButtonsEnabled(false);
             if (first) first = false;
-            if (!first) resetVariables(); clearVideoList();
-
-            /*PictureBox loader = new PictureBox();
-            loader.Image = Image.FromFile("img/loader.gif");
-            loader.SizeMode = PictureBoxSizeMode.AutoSize;
-            loader.BackColor = Color.Transparent;
-            loader.Location = new Point(pnl_videos.Width / 2, 200);
-            pnl_videos.Controls.Add(loader);*/
+            if (!first) ResetVariables(); ClearVideoList();
+            img_loader.Visibility = Visibility.Visible;
+            img_loader.StartAnimation();
 
             try
             {
@@ -96,36 +97,35 @@ namespace YouTubePlaylistDownloader.WPF
                 System.Windows.MessageBox.Show("Please select a playlist.", "No Playlist Selected", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
-            //pnl_videos.Controls.Remove(loader);
-
-            populateVideoList();
+            img_loader.StopAnimation();
+            img_loader.Visibility = Visibility.Hidden;
+            PopulateVideoList();
             ButtonsEnabled(true);
         }
 
         private void btn_selectall_Click(object sender, RoutedEventArgs e)
         {
-            foreach (VideoField panel in pnl_videos.Children)
-            {
-                foreach (var item in panel.Children)
-                {
-                    if (item is VideoCheck)
-                    {
-                        (item as VideoCheck).IsChecked = true;
-                    }
-                }
-            }
+            SelectOrDeselectAllCheckBoxes(true);
         }
-
         private void btn_deselectall_Click(object sender, RoutedEventArgs e)
         {
-            foreach (VideoField panel in pnl_videos.Children)
+            SelectOrDeselectAllCheckBoxes(false);
+        }
+
+        void SelectOrDeselectAllCheckBoxes(bool value)
+        {
+            foreach (var panel in pnl_videos.Children)
             {
-                foreach (var item in panel.Children)
+                if (panel.GetType().Equals(typeof(VideoField)))
                 {
-                    if (item is VideoCheck)
+                    foreach (var item in (panel as VideoField).Children)
                     {
-                        (item as VideoCheck).IsChecked = false;
+                        if (item is VideoCheck)
+                        {
+                            (item as VideoCheck).IsChecked = value;
+                        }
                     }
+
                 }
             }
         }
@@ -146,7 +146,7 @@ namespace YouTubePlaylistDownloader.WPF
         {
             ButtonsEnabled(false);
             downloadPath = tb_path.Text;
-            downloadVideos(false);
+            DownloadVideos(false);
             ButtonsEnabled(true);
         }
 
@@ -154,11 +154,11 @@ namespace YouTubePlaylistDownloader.WPF
         {
             ButtonsEnabled(false);
             downloadPath = tb_path.Text;
-            downloadVideos(true);
+            DownloadVideos(true);
             ButtonsEnabled(true);
         }
 
-        private bool checkboxChecked()
+        private bool CheckboxChecked()
         {
             foreach (VideoField panel in pnl_videos.Children)
             {
@@ -195,51 +195,52 @@ namespace YouTubePlaylistDownloader.WPF
             }
         }
 
-        private void populateVideoList()
+        private void PopulateVideoList()
         {
-            int marginTop = 5;
+            int fieldCount = 0;
             foreach (var video in playlistVideos)
             {
                 VideoIcon vi = new VideoIcon(video.Thumbnail as string);
                 VideoLabel vl = new VideoLabel(video.Title);
                 VideoCheck vc = new VideoCheck();
-                VideoField vf = new VideoField(vi, vl, vc, video.Url, marginTop);
+                VideoField vf = new VideoField(vi, vl, vc, video.Url);
                 pnl_videos.Children.Add(vf);
-
-                //vf.Name = video.Title;
-                Border border = new Border();
-                border.BorderThickness = new Thickness(1);
-                border.Height = vf.Height;
-                border.Width = vf.Width;
-                border.BorderBrush = Brushes.Black;
-                //pnl_videos.Children.Add(border);
-
-                //marginTop += 5;
+                fieldCount++;
+                if (fieldCount < playlistVideos.Count)
+                {
+                    Border separator = new Border
+                    {
+                        BorderThickness = new Thickness(0.5),
+                        BorderBrush = Brushes.Black,
+                        Margin = new Thickness(1, 0, 0, 0)
+                    };
+                    pnl_videos.Children.Add(separator);
+                }
             }
         }
 
-        private void repopulateVideoList()
+        private void RepopulateVideoList()
         {
-            clearVideoList();
-            populateVideoList();
+            ClearVideoList();
+            PopulateVideoList();
         }
 
-        private void clearVideoList()
+        private void ClearVideoList()
         {
             pnl_videos.Children.Clear();
         }
 
-        private void resetVariables()
+        private void ResetVariables()
         {
             playlists = new List<YouTubePlaylist>();
             playlistVideos = new List<IYouTubeVideo>();
         }
 
-        private void downloadVideos(bool convert)
+        private void DownloadVideos(bool convert)
         {
-            if (checkboxChecked())
+            if (CheckboxChecked())
             {
-                populateUrlDownloadList();
+                PopulateUrlDownloadList();
                 foreach (string url in UrlDowloadList)
                 {
                     bool downloaded = Download.DownloadMethod1(url, downloadPath);
@@ -247,14 +248,14 @@ namespace YouTubePlaylistDownloader.WPF
                     if (convert && downloaded)
                     {
                         Converter.ConvertMP4ToMP3(downloadPath, title);
-                        File.Delete(System.IO.Path.Combine(downloadPath, title + ".mp4"));
+                        File.Delete(Path.Combine(downloadPath, title + ".mp4"));
                     }
                 }
                 MessageBoxResult remove = System.Windows.MessageBox.Show("Downloads competed. Some of your videos may not have been downloaded due to copyrights." + "\n\n" + "Do you want to remove all downloaded videos from your YouTube playlist?", "Update Playlist", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (remove == MessageBoxResult.Yes)
                 {
-                    removeDownloads();
-                    repopulateVideoList();
+                    RemoveDownloads();
+                    RepopulateVideoList();
                 }
             }
             else
@@ -263,20 +264,20 @@ namespace YouTubePlaylistDownloader.WPF
             }
         }
 
-        private void populateUrlDownloadList()
+        private void PopulateUrlDownloadList()
         {
             UrlDowloadList = new List<string>();
             foreach (VideoField field in pnl_videos.Children)
             {
-                foreach(VideoCheck vc in field.Children)
-                if (vc.IsChecked == true)
-                {
-                    UrlDowloadList.Add(field.Name);
-                }
+                foreach (VideoCheck vc in field.Children)
+                    if (vc.IsChecked == true)
+                    {
+                        UrlDowloadList.Add(field.Name);
+                    }
             }
         }
 
-        private void removeDownloads()
+        private void RemoveDownloads()
         {
             try
             {
@@ -298,7 +299,7 @@ namespace YouTubePlaylistDownloader.WPF
             }
             catch (InvalidOperationException)
             {
-                removeDownloads();
+                RemoveDownloads();
             }
         }
     }

@@ -82,6 +82,7 @@ dkms.conf
 *Properties/
 *images/
 *packages/
+*.vs/
 
 #  Ignore image files
 *.ico

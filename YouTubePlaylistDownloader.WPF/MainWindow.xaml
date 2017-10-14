@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:UserInterfaceWPF"
+        xmlns:controls="clr-namespace:YouTubePlaylistDownloader.WPF.Components"
         mc:Ignorable="d"
         Title="MainWindow" Height="580" Width="860">
     <Grid Name="window">
@@ -14,13 +14,27 @@
             VerticalAlignment="Top"
             Orientation="Horizontal"
             Margin="40, 0, 0, 0">
-            <!--<TextBlock FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left">UserName Here</TextBlock>-->
+            <Viewbox
+                Name="vb_username"
+                Width="240"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Left"
+                Stretch="Uniform"
+                Visibility="Collapsed">
+                <TextBlock Name="tb_username"/>
+            </Viewbox>
             <TextBox Name="tb_email" FontSize="14" Width="150" Height="24"/>
             <Button Name="btn_verify" FontSize="11" Width="80" Height="26" Padding="25, 5" Margin="10, 0, 0, 0" Click="btn_verify_Click">Verify</Button>
             <TextBlock FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="56, 0, 10, 0">Playlist Name:</TextBlock>
             <ComboBox Name="cb_playlists" FontSize="12" Width="150" Height="24"></ComboBox>
             <Button Name="btn_fetch" FontSize="11" Width="80" Height="26" Padding="25, 5, 25, 5" Margin="10, 0, 0, 0" Click="btn_fetch_Click">Fetch</Button>
         </StackPanel>
+        <controls:GifImage
+            x:Name="img_loader"
+            Width="43" Height="11"
+            Margin="-154,-40,0,0"
+            Stretch="None"
+            Visibility="Hidden"/>
         <ScrollViewer
             VerticalScrollBarVisibility="Auto"
             Name="scrollview"

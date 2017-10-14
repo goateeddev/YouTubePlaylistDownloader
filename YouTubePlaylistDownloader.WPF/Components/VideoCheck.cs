@@ -7,11 +7,11 @@ namespace YouTubePlaylistDownloader.WPF.Components
     {
         public VideoCheck()
         {
-            Height = 13;
-            Width = 13;
-            Margin = new Thickness(500, 0, 0, 0);
+            Height = 15;
+            Width = 15;
+            Margin = new Thickness(50, 0, 0, 0);
             HorizontalAlignment = HorizontalAlignment.Left;
-            VerticalAlignment = VerticalAlignment.Top;
+            VerticalAlignment = VerticalAlignment.Center;
         }
     }
 }

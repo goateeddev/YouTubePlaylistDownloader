@@ -8,13 +8,13 @@ namespace YouTubePlaylistDownloader.WPF.Components
     {
         string URL = "";
 
-        public VideoField(VideoIcon thumbnail, VideoLabel title, VideoCheck checkbox, string url, int marginTop)
+        public VideoField(VideoIcon thumbnail, VideoLabel title, VideoCheck checkbox, string url)
         {
             URL = url;
-            Height = 120;
-            Width = 610;
-            Margin = new Thickness(5, 10, 0, 0);
-
+            //Height = 120;
+            //Width = 700;
+            Margin = new Thickness(5, 10, 0, 10);
+            Orientation = Orientation.Horizontal;
             
             Children.Add(thumbnail);
             Children.Add(title);
