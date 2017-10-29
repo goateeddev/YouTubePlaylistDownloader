@@ -5,7 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 
-namespace YouTubePlaylistDownloader.WPF.Components
+namespace YouTubePlaylistDownloader.WPF.UIComponents
 {
     public class GifImage : Image
     {

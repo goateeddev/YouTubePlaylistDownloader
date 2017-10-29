@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using YouTubePlaylistDownloader.Services.YoutubeExtractor;
 
 namespace YouTubePlaylistDownloader.Core.Utilities
 {
     public static class Download
     {
-        public static bool DownloadMethod1(string url, string path)
+        public delegate void ReturnDownloadPercent(double percent);
+
+        public static bool DownloadMethod1(string url, string path, string action, ReturnDownloadPercent returnDownloadPercentage)
         {
             try
             {
@@ -18,20 +21,15 @@ namespace YouTubePlaylistDownloader.Core.Utilities
                  */
                 IEnumerable<VideoInfo> videoInfos = DownloadUrlResolver.GetDownloadUrls(url);
 
-                /*
-                 * Select the first .mp4 video with 360p resolution
-                 */
-                VideoInfo video = videoInfos
-                    .First(info => info.VideoType == VideoType.Mp4 && info.Resolution == 360);
-
-                /*
-                 * If the video has a decrypted signature, decipher it
-                 */
-                if (video.RequiresDecryption)
+                // Select the first .mp4 video with the highest resolution
+                VideoInfo video = videoInfos.First(info =>
                 {
-                    DownloadUrlResolver.DecryptDownloadUrl(video);
-                }
+                    if (action.Equals("download")) return (info.VideoType == VideoType.Mp4 && (info.Resolution == 720 || info.Resolution == 480 || info.Resolution == 360));
+                    else return (info.VideoType == VideoType.Mp4 && info.Resolution == 360);
+                });
 
+                //If the video has a decrypted signature, decipher it
+                if (video.RequiresDecryption) DownloadUrlResolver.DecryptDownloadUrl(video);
                 /*
                  * Create the video downloader.
                  * The first argument is the video to download.
@@ -41,12 +39,14 @@ namespace YouTubePlaylistDownloader.Core.Utilities
 
                 // Register the ProgressChanged event and print the current progress
                 //videoDownloader.DownloadProgressChanged += (sender, args) => Console.WriteLine(args.ProgressPercentage);
+                videoDownloader.DownloadProgressChanged += (sender, args) => returnDownloadPercentage(args.ProgressPercentage);
 
                 /*
                  * Execute the video downloader.
                  * For GUI applications note, that this method runs synchronously.
                  */
                 videoDownloader.Execute();
+
                 return true;
             }
             catch (Exception)

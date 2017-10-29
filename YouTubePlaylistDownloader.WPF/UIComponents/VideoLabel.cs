@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 
-namespace YouTubePlaylistDownloader.WPF.Components
+namespace YouTubePlaylistDownloader.WPF.UIComponents
 {
     public class VideoLabel : TextBlock
     {

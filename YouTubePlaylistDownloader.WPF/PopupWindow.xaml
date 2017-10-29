@@ -1,0 +1,48 @@
+﻿<Window x:Class="YouTubePlaylistDownloader.WPF.PopupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:YouTubePlaylistDownloader.WPF"
+        mc:Ignorable="d"
+        Title="PopupWindow" Height="200" Width="400">
+    <Grid>
+        <TextBlock
+            Name="tb_action"
+            FontSize="20"
+            HorizontalAlignment="Left"
+            Margin="35,20,0,0"
+            TextWrapping="Wrap"
+            Text="Action..."
+            VerticalAlignment="Top"/>
+        <Viewbox
+            Margin="35,60,0,0"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Left"
+            Stretch="Uniform"
+            Height="20" Width="320">
+            <TextBlock
+                Name="tb_filename"
+                TextWrapping="Wrap"
+                Text="Filename: "/>
+        </Viewbox>
+        <ProgressBar
+            Name="pb_progressbar"
+            HorizontalAlignment="Left"
+            Height="20"
+            Margin="35,90,0,0"
+            VerticalAlignment="Top"
+            Width="321"/>
+        <Viewbox
+            Margin="35,120,0,0"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Left"
+            Stretch="Uniform"
+            Height="20" Width="320">
+            <TextBlock
+                Name="tb_destination"
+                TextWrapping="Wrap"
+                Text="Destination: "/>
+        </Viewbox>
+    </Grid>
+</Window>

@@ -72,7 +72,6 @@ dkms.conf
 *.dll
 *.lib
 *.sbr
-*.csproj
 *.sln
 *.resx
 

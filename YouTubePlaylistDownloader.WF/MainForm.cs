@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Drawing;
 using System.IO;
 using YouTubePlaylistDownloader.WF.Components;
-using YouTubePlaylistDownloader.DTO.Common;
+using YouTubePlaylistDownloader.DTO.Interfaces;
 using YouTubePlaylistDownloader.Core;
 using YouTubePlaylistDownloader.Core.Utilities;
 
@@ -249,7 +249,7 @@ namespace YouTubePlaylistDownloader.WF
                 populateUrlDownloadList();
                 foreach (string url in UrlDowloadList)
                 {
-                    bool downloaded = Download.DownloadMethod1(url, downloadPath);
+                    bool downloaded = Download.DownloadMethod1(url, downloadPath, convert ? "convert" : "download");
                     string title = playlistVideos.Find(t => t.Url.Equals(url)).Title;
                     if (convert && downloaded)
                     {

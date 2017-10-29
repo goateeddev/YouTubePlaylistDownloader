@@ -107,7 +107,6 @@ namespace YouTubePlaylistDownloader.Services.YoutubeExtractor
 
                 return infos;
             }
-
             catch (Exception ex)
             {
                 if (ex is WebException || ex is VideoNotAvailableException)

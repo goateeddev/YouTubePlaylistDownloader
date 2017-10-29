@@ -1,36 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using YouTubePlaylistDownloader.DTO.Common;
+using YouTubePlaylistDownloader.DTO.Interfaces;
 using YouTubePlaylistDownloader.Services;
 
 namespace YouTubePlaylistDownloader.Core
 {
     public class YouTubeServiceBuilder
     {
-        YouTubeServices services = new YouTubeServices();
-
-        public YouTubeServiceBuilder()
-        {
-            // Default Constructor
-        }
-
+        private YouTubeServices services = new YouTubeServices();
+        
         public async Task<string> GetAccountUsername(string email)
         {
-            string webData;
-            string channelId = await services.GetUserChannelId(email);
-            webData = new WebClient().DownloadString("https://www.youtube.com/channel/" + channelId);
-            return Regex.Match(webData, @"<title>  (.+)\n - YouTube</title>", RegexOptions.Singleline).Groups[1].Value;
+            return await services.GetAccountUsername(email);
         }
 
-        public async Task<List<YouTubePlaylist>> GetUserPlaylists(List<YouTubePlaylist> playlists)
+        public async Task<IYouTubePlaylists> GetUserPlaylists()
         {
             try
             {
-                await services.GetUserPlaylists(playlists);
+                return await services.GetUserPlaylists();
             }
             catch (AggregateException ex)
             {
@@ -39,19 +28,20 @@ namespace YouTubePlaylistDownloader.Core
                     Console.WriteLine("|| ERROR || " + e);
                 }
             }
-            return playlists;
+            return null;
         }
 
-        public string GetPlaylistsId(string playlistName, List<YouTubePlaylist> playlists)
+        private string GetPlaylistsId(IYouTubePlaylists playlists, string playlistName)
         {
             return (from p in playlists where p.Name == playlistName select p.Id).First();
         }
 
-        public async Task<List<IYouTubeVideo>> GetPlaylistVideos(string playlistId, List<IYouTubeVideo> playlistVideos)
+        public async Task<IYouTubeVideos> GetPlaylistVideos(IYouTubePlaylists playlists, string playlistName)
         {
+            string playlistId = GetPlaylistsId(playlists, playlistName);
             try
             {
-                await services.GetPlaylistVideos(playlistId, playlistVideos);
+                return await services.GetPlaylistVideos(playlistId);
             }
             catch (AggregateException ex)
             {
@@ -60,7 +50,7 @@ namespace YouTubePlaylistDownloader.Core
                     Console.WriteLine("|| ERROR || " + e);
                 }
             }
-            return playlistVideos;
+            return null;
         }
 
         public async Task<bool> RemoveSongFromPlaylist(string playlistItemId)
@@ -68,6 +58,7 @@ namespace YouTubePlaylistDownloader.Core
             bool removed = false;
             try
             {
+                // TODO: Return true if playlist was removed based of response.
                 await services.RemoveSongFromPlaylistAsync(playlistItemId);
                 removed = true;
             }
@@ -82,16 +73,10 @@ namespace YouTubePlaylistDownloader.Core
             return removed;
         }
 
-        public async Task<bool> PlaylistExists(string name)
+        private async Task<bool> PlaylistExists(string name)
         {
-            List<YouTubePlaylist> playlists = new List<YouTubePlaylist>();
-            playlists = await GetUserPlaylists(playlists);
-            foreach (var pl in playlists)
-            {
-                if (pl.Name.Equals(name)) return true;
-            }
-            return false;
+            var playlists = await GetUserPlaylists();
+            return playlists.Exists(name);
         }
-
     }
 }
