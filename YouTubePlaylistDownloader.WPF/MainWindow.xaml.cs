@@ -5,13 +5,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using YouTubePlaylistDownloader.DTO.DependencyInjection;
 using YouTubePlaylistDownloader.DTO.Interfaces;
 using YouTubePlaylistDownloader.WPF.UIComponents;
 using YouTubePlaylistDownloader.Core;
 using YouTubePlaylistDownloader.Core.Utilities;
-using System.Windows.Media.Animation;
 using YouTubePlaylistDownloader.DTO.Enums;
 
 namespace YouTubePlaylistDownloader.WPF
@@ -32,6 +32,7 @@ namespace YouTubePlaylistDownloader.WPF
             Initialisations();
 
             btn_verify.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            btn_fetch.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         }
 
         private void Initialisations()
@@ -89,7 +90,8 @@ namespace YouTubePlaylistDownloader.WPF
             try
             {
                 playlists = await YouTubeServiceBuilder.GetUserPlaylists();
-                playlistVideos = await YouTubeServiceBuilder.GetPlaylistVideos(playlists, cb_playlists.Text);
+                playlistVideos = await YouTubeServiceBuilder.GetPlaylistVideos(playlists, "JAMAICA");
+                //playlistVideos = await YouTubeServiceBuilder.GetPlaylistVideos(playlists, cb_playlists.Text);
             }
             catch (System.Net.Http.HttpRequestException)
             {
@@ -122,11 +124,11 @@ namespace YouTubePlaylistDownloader.WPF
             {
                 if (panel is VideoField)
                 {
-                    foreach (var item in (panel as VideoField).Children)
+                    foreach (var item in ((VideoField)panel).Children)
                     {
                         if (item is VideoCheck)
                         {
-                            (item as VideoCheck).IsChecked = value;
+                            ((VideoCheck)item).IsChecked = value;
                         }
                     }
 
@@ -150,7 +152,7 @@ namespace YouTubePlaylistDownloader.WPF
         {
             ButtonsEnabled(false);
             downloadPath = tb_path.Text;
-            DownloadVideos(false);
+            DownloadVideos(ActionType.Download);
             ButtonsEnabled(true);
         }
 
@@ -158,7 +160,7 @@ namespace YouTubePlaylistDownloader.WPF
         {
             ButtonsEnabled(false);
             downloadPath = tb_path.Text;
-            DownloadVideos(true);
+            DownloadVideos(ActionType.Convert);
             ButtonsEnabled(true);
         }
 
@@ -243,25 +245,32 @@ namespace YouTubePlaylistDownloader.WPF
             playlistVideos = DependencyManager.Resolve<IYouTubeVideos>(); ;
         }
 
-        private void DownloadVideos(bool convert)
+        private void DownloadVideos(ActionType action)
         {
             if (CheckboxChecked())
             {
                 PopulateUrlDownloadList();
                 foreach (string url in UrlDowloadList)
                 {
-                    // TODO: Multithread, download progress bar, download cancel capability
-                    bool downloaded = false; // Download.DownloadMethod1(url, downloadPath, convert ? "convert":"download", GetDownloadPercentage);
-
                     string title = playlistVideos.Find(url).Title;
-                    GeneratePopupWindow(ActionType.Download, title, 10, downloadPath);
-                    if (convert && downloaded)
+
+                    progbarwin = new ProgressBarWindow(action, title, 10, downloadPath)
+                    {
+                        Owner = this
+                    };
+                    progbarwin.Show();
+
+                    // TODO: Multithread, download progress bar, download cancel capability
+                    bool downloaded = Download.DownloadMethod1(action, title, url, downloadPath, SetProgress);
+
+                    if (action.Equals(ActionType.Convert) && downloaded)
                     {
                         Converter.ConvertMP4ToMP3(downloadPath, title);
                         File.Delete(Path.Combine(downloadPath, title + ".mp4"));
                     }
+                    progbarwin.Close();
                 }
-                MessageBoxResult remove = System.Windows.MessageBox.Show("Downloads competed. Some of your videos may not have been downloaded due to copyrights." + "\n\n" + "Do you want to remove all downloaded videos from your YouTube playlist?", "Update Playlist", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                MessageBoxResult remove = System.Windows.MessageBox.Show("Downloads completed. Some of your videos may not have been downloaded due to copyrights." + "\n\n" + "Do you want to remove all downloaded videos from your YouTube playlist?", "Update Playlist", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (remove == MessageBoxResult.Yes)
                 {
                     RemoveDownloads();
@@ -281,6 +290,13 @@ namespace YouTubePlaylistDownloader.WPF
                 Owner = this
             };
             progbarwin.Show();
+        }
+
+        ProgressBarWindow progbarwin;
+        public void SetProgress(double value)
+        {
+            // sender args event
+            progbarwin.SetProgressValue(value);
         }
 
         private void PopulateUrlDownloadList()

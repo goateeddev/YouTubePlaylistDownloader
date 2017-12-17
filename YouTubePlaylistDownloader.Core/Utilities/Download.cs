@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using YouTubePlaylistDownloader.DTO.Enums;
 using YouTubePlaylistDownloader.Services.YoutubeExtractor;
 
 namespace YouTubePlaylistDownloader.Core.Utilities
@@ -11,7 +12,7 @@ namespace YouTubePlaylistDownloader.Core.Utilities
     {
         public delegate void ReturnDownloadPercent(double percent);
 
-        public static bool DownloadMethod1(string url, string path, string action, ReturnDownloadPercent returnDownloadPercentage)
+        public static bool DownloadMethod1(ActionType action, string title, string url, string path, ReturnDownloadPercent returnDownloadPercentage)
         {
             try
             {
@@ -24,7 +25,7 @@ namespace YouTubePlaylistDownloader.Core.Utilities
                 // Select the first .mp4 video with the highest resolution
                 VideoInfo video = videoInfos.First(info =>
                 {
-                    if (action.Equals("download")) return (info.VideoType == VideoType.Mp4 && (info.Resolution == 720 || info.Resolution == 480 || info.Resolution == 360));
+                    if (action.Equals(ActionType.Download)) return (info.VideoType == VideoType.Mp4 && (info.Resolution == 720 || info.Resolution == 480 || info.Resolution == 360));
                     else return (info.VideoType == VideoType.Mp4 && info.Resolution == 360);
                 });
 
