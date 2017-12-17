@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using YouTubePlaylistDownloader.Core.Handlers;
 using YouTubePlaylistDownloader.DTO.Enums;
 using YouTubePlaylistDownloader.Services.YoutubeExtractor;
 
 namespace YouTubePlaylistDownloader.Core.Utilities
 {
-    public static class Download
+    public class Download
     {
-        public delegate void ReturnDownloadPercent(double percent);
+        public event EventHandler<ProgressBarEventArgs> EventHandler;
 
-        public static bool DownloadMethod1(ActionType action, string title, string url, string path, ReturnDownloadPercent returnDownloadPercentage)
+        public bool DownloadMethod1(ActionType action, string title, string url, string path)
         {
             try
             {
@@ -31,6 +31,7 @@ namespace YouTubePlaylistDownloader.Core.Utilities
 
                 //If the video has a decrypted signature, decipher it
                 if (video.RequiresDecryption) DownloadUrlResolver.DecryptDownloadUrl(video);
+
                 /*
                  * Create the video downloader.
                  * The first argument is the video to download.
@@ -38,10 +39,9 @@ namespace YouTubePlaylistDownloader.Core.Utilities
                  */
                 var videoDownloader = new VideoDownloader(video, Path.Combine(path, video.Title + video.VideoExtension));
 
-                // Register the ProgressChanged event and print the current progress
-                //videoDownloader.DownloadProgressChanged += (sender, args) => Console.WriteLine(args.ProgressPercentage);
-                videoDownloader.DownloadProgressChanged += (sender, args) => returnDownloadPercentage(args.ProgressPercentage);
-
+                // Register the ProgressChanged event and return current progress to ProgressBar
+                videoDownloader.DownloadProgressChanged += (sender, args) => EventHandler(this, new ProgressBarEventArgs(args.ProgressPercentage));
+                
                 /*
                  * Execute the video downloader.
                  * For GUI applications note, that this method runs synchronously.

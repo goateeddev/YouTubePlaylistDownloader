@@ -1,12 +1,14 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Media.Animation;
+﻿using System.IO;
+using System.Windows.Threading;
+using YouTubePlaylistDownloader.Core.Utilities;
 using YouTubePlaylistDownloader.DTO.Enums;
 
 namespace YouTubePlaylistDownloader.WPF.UIComponents
 {
     public class ProgressBarWindow : PopupWindow
     {
+        private readonly Download download = new Download();
+
         public ProgressBarWindow(ActionType action, string title, double percent, string filepath)
         {
             tb_action.Text = action.Equals(ActionType.Download) ? "Downloading..." : "Converting...";
@@ -15,28 +17,27 @@ namespace YouTubePlaylistDownloader.WPF.UIComponents
 
             pb_progressbar.Minimum = 0;
             pb_progressbar.Maximum = 100;
-            //SetDuration(percent);
         }
 
-        public void SetProgressValue(double value)
+        public bool Start(ActionType action, string title, string url, string path)
         {
-            pb_progressbar.Value = value;
+            var downloaded = false;
+            while (!downloaded)
+            {
+                downloaded = download.DownloadMethod1(action, title, url, path);
+                download.EventHandler += (sender, args) => SetProgressValue(args.ProgressPercentage);
+            }
+            if (action.Equals(ActionType.Convert) && downloaded)
+            {
+                Converter.ConvertMP4ToMP3(path, title);
+                File.Delete(Path.Combine(path, title + ".mp4"));
+            }
+            return downloaded;
         }
 
-        Duration duration;
-        DoubleAnimation doubleanimation;
-
-        private void SetDuration(double percent)
+        private void SetProgressValue(double value)
         {
-            duration = new Duration(TimeSpan.FromSeconds(percent));
-            doubleanimation = new DoubleAnimation(0.0, 100.0, duration);
-            pb_progressbar.BeginAnimation(System.Windows.Controls.Primitives.RangeBase.ValueProperty, doubleanimation);
-        }
-
-        public void UpdateProgress(double progress)
-        {
-            doubleanimation.Duration = new Duration(TimeSpan.FromSeconds(progress));
-
+            pb_progressbar.Dispatcher.Invoke(() => pb_progressbar.Value = value, DispatcherPriority.Background);
         }
     }
 }

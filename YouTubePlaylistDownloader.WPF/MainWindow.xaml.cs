@@ -5,13 +5,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
 using YouTubePlaylistDownloader.DTO.DependencyInjection;
 using YouTubePlaylistDownloader.DTO.Interfaces;
 using YouTubePlaylistDownloader.WPF.UIComponents;
 using YouTubePlaylistDownloader.Core;
-using YouTubePlaylistDownloader.Core.Utilities;
 using YouTubePlaylistDownloader.DTO.Enums;
 
 namespace YouTubePlaylistDownloader.WPF
@@ -23,6 +21,7 @@ namespace YouTubePlaylistDownloader.WPF
         IYouTubeVideos playlistVideos = DependencyManager.Resolve<IYouTubeVideos>();
         List<string> UrlDowloadList = new List<string>();
         VideoList pnl_videos = new VideoList();
+        ProgressBarWindow progbarwin;
         string downloadPath;
         bool first = true;
 
@@ -31,13 +30,13 @@ namespace YouTubePlaylistDownloader.WPF
             InitializeComponent();
             Initialisations();
 
-            btn_verify.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-            btn_fetch.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            //btn_verify.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            //btn_fetch.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         }
 
         private void Initialisations()
         {
-            Border border = new Border
+            var border = new Border
             {
                 BorderThickness = new Thickness(1),
                 Height = 350,
@@ -59,7 +58,7 @@ namespace YouTubePlaylistDownloader.WPF
             try
             {
                 //TODO: work out why any string passed authenticates my user account
-                string username = await YouTubeServiceBuilder.GetAccountUsername("email_here");
+                var username = await YouTubeServiceBuilder.GetAccountUsername("email_here");
                 tb_email.Visibility = Visibility.Collapsed;
                 btn_verify.Visibility = Visibility.Collapsed;
                 tb_username.Text = username;
@@ -90,8 +89,7 @@ namespace YouTubePlaylistDownloader.WPF
             try
             {
                 playlists = await YouTubeServiceBuilder.GetUserPlaylists();
-                playlistVideos = await YouTubeServiceBuilder.GetPlaylistVideos(playlists, "JAMAICA");
-                //playlistVideos = await YouTubeServiceBuilder.GetPlaylistVideos(playlists, cb_playlists.Text);
+                playlistVideos = await YouTubeServiceBuilder.GetPlaylistVideos(playlists, cb_playlists.Text);
             }
             catch (System.Net.Http.HttpRequestException)
             {
@@ -138,8 +136,10 @@ namespace YouTubePlaylistDownloader.WPF
 
         private void btn_browse_Click(object sender, RoutedEventArgs e)
         {
-            FolderBrowserDialog fbd = new FolderBrowserDialog();
-            fbd.Description = "Custom Description";
+            var fbd = new FolderBrowserDialog
+            {
+                Description = "Custom Description"
+            };
 
             if (fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
@@ -206,18 +206,18 @@ namespace YouTubePlaylistDownloader.WPF
 
         private void PopulateVideoList()
         {
-            int fieldCount = 0;
+            var fieldCount = 0;
             foreach (var video in playlistVideos)
             {
-                VideoIcon vi = new VideoIcon(video.Thumbnail.ToString());
-                VideoLabel vl = new VideoLabel(video.Title);
-                VideoCheck vc = new VideoCheck();
-                VideoField vf = new VideoField(vi, vl, vc, video.Url);
+                var vi = new VideoIcon(video.Thumbnail.ToString());
+                var vl = new VideoLabel(video.Title);
+                var vc = new VideoCheck();
+                var vf = new VideoField(vi, vl, vc, video.Url);
                 pnl_videos.Children.Add(vf);
                 fieldCount++;
                 if (fieldCount < playlistVideos.Count)
                 {
-                    Border separator = new Border
+                    var separator = new Border
                     {
                         BorderThickness = new Thickness(0.5),
                         BorderBrush = Brushes.Black,
@@ -250,27 +250,19 @@ namespace YouTubePlaylistDownloader.WPF
             if (CheckboxChecked())
             {
                 PopulateUrlDownloadList();
-                foreach (string url in UrlDowloadList)
+                foreach (var url in UrlDowloadList)
                 {
-                    string title = playlistVideos.Find(url).Title;
+                    var title = playlistVideos.Find(url).Title;
 
                     progbarwin = new ProgressBarWindow(action, title, 10, downloadPath)
                     {
                         Owner = this
                     };
                     progbarwin.Show();
-
-                    // TODO: Multithread, download progress bar, download cancel capability
-                    bool downloaded = Download.DownloadMethod1(action, title, url, downloadPath, SetProgress);
-
-                    if (action.Equals(ActionType.Convert) && downloaded)
-                    {
-                        Converter.ConvertMP4ToMP3(downloadPath, title);
-                        File.Delete(Path.Combine(downloadPath, title + ".mp4"));
-                    }
+                    progbarwin.Start(action, title, url, downloadPath);
                     progbarwin.Close();
                 }
-                MessageBoxResult remove = System.Windows.MessageBox.Show("Downloads completed. Some of your videos may not have been downloaded due to copyrights." + "\n\n" + "Do you want to remove all downloaded videos from your YouTube playlist?", "Update Playlist", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                var remove = System.Windows.MessageBox.Show("Downloads completed. Some of your videos may not have been downloaded due to copyrights." + "\n\n" + "Do you want to remove all downloaded videos from your YouTube playlist?", "Update Playlist", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (remove == MessageBoxResult.Yes)
                 {
                     RemoveDownloads();
@@ -281,22 +273,6 @@ namespace YouTubePlaylistDownloader.WPF
             {
                 System.Windows.MessageBox.Show("Please select a video to download.", "Selection Required", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
-        }
-
-        public void GeneratePopupWindow(ActionType action, string title, double percent, string filepath)
-        {
-            ProgressBarWindow progbarwin = new ProgressBarWindow(action, title, percent, filepath)
-            {
-                Owner = this
-            };
-            progbarwin.Show();
-        }
-
-        ProgressBarWindow progbarwin;
-        public void SetProgress(double value)
-        {
-            // sender args event
-            progbarwin.SetProgressValue(value);
         }
 
         private void PopulateUrlDownloadList()
