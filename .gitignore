@@ -78,7 +78,6 @@ dkms.conf
 *obj/
 *bin/
 *images/
-*packages/
 *.vs/
 
 #  Ignore image files
