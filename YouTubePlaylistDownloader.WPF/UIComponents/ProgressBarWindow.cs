@@ -9,7 +9,7 @@ namespace YouTubePlaylistDownloader.WPF.UIComponents
     {
         private readonly Download download = new Download();
 
-        public ProgressBarWindow(ActionType action, string title, double percent, string filepath)
+        public ProgressBarWindow(ActionType action, string title, string filepath)
         {
             tb_action.Text = action.Equals(ActionType.Download) ? "Downloading..." : "Converting...";
             tb_filename.Text += title;

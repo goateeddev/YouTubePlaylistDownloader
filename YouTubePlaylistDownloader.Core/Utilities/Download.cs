@@ -40,6 +40,7 @@ namespace YouTubePlaylistDownloader.Core.Utilities
                 var videoDownloader = new VideoDownloader(video, Path.Combine(path, video.Title + video.VideoExtension));
 
                 // Register the ProgressChanged event and return current progress to ProgressBar
+                // TODO: only use if WPF or implement progress bar for WF
                 videoDownloader.DownloadProgressChanged += (sender, args) => EventHandler(this, new ProgressBarEventArgs(args.ProgressPercentage));
                 
                 /*

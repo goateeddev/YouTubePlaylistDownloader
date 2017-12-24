@@ -242,7 +242,7 @@ namespace YouTubePlaylistDownloader.WPF
         private void ResetVariables()
         {
             playlists = DependencyManager.Resolve<IYouTubePlaylists>();
-            playlistVideos = DependencyManager.Resolve<IYouTubeVideos>(); ;
+            playlistVideos = DependencyManager.Resolve<IYouTubeVideos>();
         }
 
         private void DownloadVideos(ActionType action)
@@ -254,7 +254,7 @@ namespace YouTubePlaylistDownloader.WPF
                 {
                     var title = playlistVideos.Find(url).Title;
 
-                    progbarwin = new ProgressBarWindow(action, title, 10, downloadPath)
+                    progbarwin = new ProgressBarWindow(action, title, downloadPath)
                     {
                         Owner = this
                     };

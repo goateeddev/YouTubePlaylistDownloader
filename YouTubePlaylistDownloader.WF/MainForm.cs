@@ -8,14 +8,17 @@ using YouTubePlaylistDownloader.WF.Components;
 using YouTubePlaylistDownloader.DTO.Interfaces;
 using YouTubePlaylistDownloader.Core;
 using YouTubePlaylistDownloader.Core.Utilities;
+using YouTubePlaylistDownloader.DTO;
+using YouTubePlaylistDownloader.DTO.DependencyInjection;
+using YouTubePlaylistDownloader.DTO.Enums;
 
 namespace YouTubePlaylistDownloader.WF
 {
     public partial class MainForm : Form
     {
-        YouTubeServiceBuilder Logic = new YouTubeServiceBuilder();
-        List<YouTubePlaylist> playlists = new List<YouTubePlaylist>();
-        List<IYouTubeVideo> playlistVideos = new List<IYouTubeVideo>();
+        YouTubeServiceBuilder YouTubeServiceBuilder = new YouTubeServiceBuilder();
+        IYouTubePlaylists playlists = DependencyManager.Resolve<IYouTubePlaylists>();
+        IYouTubeVideos playlistVideos = DependencyManager.Resolve<IYouTubeVideos>();
         List<string> UrlDowloadList = new List<string>();
         VideoList pnl_videos = new VideoList();
         string playlistId, downloadPath;
@@ -51,8 +54,8 @@ namespace YouTubePlaylistDownloader.WF
         {
             try
             {
-                lbl_username.Text = await Logic.GetAccountUsername("email_here");
-                playlists = await Logic.GetUserPlaylists(playlists);
+                lbl_username.Text = await YouTubeServiceBuilder.GetAccountUsername("email_here");
+                playlists = await YouTubeServiceBuilder.GetUserPlaylists();
 
                 foreach (var item in playlists)
                 {
@@ -82,9 +85,8 @@ namespace YouTubePlaylistDownloader.WF
 
             try
             {
-                playlists = await Logic.GetUserPlaylists(playlists);
-                playlistId = Logic.GetPlaylistsId(cb_playlists.Text, playlists);
-                playlistVideos = await Logic.GetPlaylistVideos(playlistId, playlistVideos);
+                playlists = await YouTubeServiceBuilder.GetUserPlaylists();
+                playlistVideos = await YouTubeServiceBuilder.GetPlaylistVideos(playlists, cb_playlists.Text);
             }
             catch (System.Net.Http.HttpRequestException)
             {
@@ -145,7 +147,7 @@ namespace YouTubePlaylistDownloader.WF
         {
             ButtonsEnabled(false);
             downloadPath = tb_path.Text;
-            downloadVideos(false);
+            DownloadVideos(ActionType.Download);
             ButtonsEnabled(true);
         }
 
@@ -153,7 +155,7 @@ namespace YouTubePlaylistDownloader.WF
         {
             ButtonsEnabled(false);
             downloadPath = tb_path.Text;
-            downloadVideos(true);
+            DownloadVideos(ActionType.Convert);
             ButtonsEnabled(true);
         }
 
@@ -238,20 +240,21 @@ namespace YouTubePlaylistDownloader.WF
 
         private void resetVariables()
         {
-            playlists = new List<YouTubePlaylist>();
-            playlistVideos = new List<IYouTubeVideo>();
+            playlists = DependencyManager.Resolve<IYouTubePlaylists>();
+            playlistVideos = DependencyManager.Resolve<IYouTubeVideos>();
         }
 
-        private void downloadVideos(bool convert)
+        private readonly Download download = new Download();
+        private void DownloadVideos(ActionType action)
         {
             if (checkboxChecked())
             {
-                populateUrlDownloadList();
+                PopulateUrlDownloadList();
                 foreach (string url in UrlDowloadList)
                 {
-                    bool downloaded = Download.DownloadMethod1(url, downloadPath, convert ? "convert" : "download");
-                    string title = playlistVideos.Find(t => t.Url.Equals(url)).Title;
-                    if (convert && downloaded)
+                    var title = playlistVideos.Find(url).Title;
+                    bool downloaded = download.DownloadMethod1(action, title, url, downloadPath);
+                    if (action.Equals(ActionType.Convert) && downloaded)
                     {
                         Converter.ConvertMP4ToMP3(downloadPath, title);
                         File.Delete(Path.Combine(downloadPath, title + ".mp4"));
@@ -270,7 +273,7 @@ namespace YouTubePlaylistDownloader.WF
             }
         }
 
-        private void populateUrlDownloadList()
+        private void PopulateUrlDownloadList()
         {
             UrlDowloadList = new List<string>();
             foreach (VideoField field in pnl_videos.Controls)
@@ -299,7 +302,7 @@ namespace YouTubePlaylistDownloader.WF
                                 pnl_videos.Controls.Remove(field);
                             }
                         }
-                        Task.Run(() => Logic.RemoveSongFromPlaylist(video.PlaylistItemId).Wait());
+                        Task.Run(() => YouTubeServiceBuilder.RemoveSongFromPlaylist(video.PlaylistItemId).Wait());
                     }
                 }
             }
