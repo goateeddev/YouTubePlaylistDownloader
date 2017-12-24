@@ -72,7 +72,6 @@ dkms.conf
 *.dll
 *.lib
 *.sbr
-*.sln
 *.resx
 
 # Ignore folders by Visual Studio
