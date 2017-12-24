@@ -77,7 +77,6 @@ dkms.conf
 # Ignore folders by Visual Studio
 *obj/
 *bin/
-*Properties/
 *images/
 *packages/
 *.vs/
